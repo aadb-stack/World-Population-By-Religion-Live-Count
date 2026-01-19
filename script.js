@@ -1,17 +1,17 @@
-// ================================
+// =============================================
 // World Population by Religion
-// Firebase Server-Authoritative
-// ================================
+// Server-Authoritative (Firebase Anchor)
+// =============================================
 
-// 🔹 Firebase imports (v9+ modular)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+const { initializeApp, getDatabase, ref, get } = window.firebaseModules;
 
-// 🔹 Constants
-const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
-const WORLD_GROWTH_RATE = 0.0085;
+// --- CONSTANTS ---
+const secondsPerYear = 365 * 24 * 60 * 60;
 
-// 🔹 Religion shares (static proportions)
+const growthRates = {
+  world: 0.0085
+};
+
 const religionShares = {
   christian: 2380000000 / 8180000000,
   islam: 2020000000 / 8180000000,
@@ -26,7 +26,7 @@ const religionShares = {
   unaffiliated: 1900000000 / 8180000000
 };
 
-// 🔹 Firebase config
+// --- FIREBASE INIT ---
 const firebaseConfig = {
   apiKey: "AIzaSyC60KbVWhfeMRUyYPQHn_4z3tL_KPuaCAs",
   authDomain: "world-religion-database.firebaseapp.com",
@@ -37,27 +37,21 @@ const firebaseConfig = {
   appId: "1:226381276599:web:5c15d6b6f32e232125b432"
 };
 
-// 🔹 Init Firebase
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const statsRef = ref(db, "/stats");
+const database = getDatabase(app);
+const statsRef = ref(database, "/");
 
-// 🔹 Server anchor
-let baseWorld = null;
-let baseTimestamp = null;
+// --- GLOBAL ANCHOR ---
+let baseWorld = 0;
+let baseTimestamp = 0;
 
-// 🔹 Previous display cache
-const previous = {
-  world: null,
-  religions: {}
-};
-
-// 🔹 Load anchor from Firebase
-async function loadAnchor() {
+// --- LOAD ANCHOR FROM FIREBASE ---
+async function loadData() {
   const snapshot = await get(statsRef);
+  console.log("SNAPSHOT:", snapshot.val());
 
   if (!snapshot.exists()) {
-    console.error("No data found in Firebase");
+    console.error("Firebase returned NULL");
     return;
   }
 
@@ -66,59 +60,48 @@ async function loadAnchor() {
   baseWorld = Number(data.baseWorld);
   baseTimestamp = Number(data.baseTimestamp);
 
-  console.log("Anchor loaded:", baseWorld, baseTimestamp);
+  console.log("Loaded baseWorld:", baseWorld);
+  console.log("Loaded baseTimestamp:", baseTimestamp);
 }
 
-// 🔹 Compute current world population
+
+// --- PURE WORLD CALCULATION ---
 function computeWorldNow() {
   const now = Date.now();
   const elapsedSeconds = (now - baseTimestamp) / 1000;
 
   return Math.floor(
-    baseWorld * (1 + WORLD_GROWTH_RATE * elapsedSeconds / SECONDS_PER_YEAR)
+    baseWorld *
+    (1 + growthRates.world * elapsedSeconds / secondsPerYear)
   );
 }
 
-// 🔹 Update DOM
-function updateUI() {
-  if (baseWorld === null || baseTimestamp === null) return;
+// --- DISPLAY ONLY ---
+function updateCounters() {
+  // 🔒 Guard: don’t run until Firebase data is loaded
+  if (!baseWorld || !baseTimestamp) {
+    console.warn("Waiting for Firebase data...");
+    return;
+  }
 
-  const worldNow = computeWorldNow();
+  const worldInt = computeWorldNow();
 
-  updateNumber("world", worldNow, "world");
+  const worldEl = document.getElementById("world");
+  if (worldEl) {
+    worldEl.textContent = worldInt.toLocaleString();
+  }
 
-  for (const key in religionShares) {
-    const value = Math.floor(worldNow * religionShares[key]);
-    updateNumber(key, value, key);
+  for (let key in religionShares) {
+    const el = document.getElementById(key);
+    if (!el) continue;
+
+    const value = Math.floor(worldInt * religionShares[key]);
+    el.textContent = value.toLocaleString();
   }
 }
 
-// 🔹 Helper: animate color on change
-function updateNumber(id, value, cacheKey) {
-  const el = document.getElementById(id);
-  if (!el) return;
-
-  el.textContent = value.toLocaleString();
-
-  const prev = previous[cacheKey] ?? previous.religions[cacheKey];
-
-  if (prev !== undefined && prev !== null) {
-    el.style.color =
-      value > prev ? "#00ff88" :
-      value < prev ? "#ff4d4d" :
-      "white";
-  }
-
-  if (cacheKey === "world") {
-    previous.world = value;
-  } else {
-    previous.religions[cacheKey] = value;
-  }
-}
-
-// 🔹 Boot
-(async function start() {
-  await loadAnchor();
-  updateUI();
-  setInterval(updateUI, 1000);
-})();
+// --- RUN ---
+loadData().then(() => {
+  updateCounters();
+  setInterval(updateCounters, 1000);
+});
