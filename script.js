@@ -58,6 +58,7 @@ let worldPopulation = 0;
 let religions = {};
 let lastTimestamp = 0;
 let previousDisplay = {};
+let lastTickTime = Date.now();
 
 // =============================================
 // LOAD DATA FROM FIREBASE
@@ -112,7 +113,14 @@ function updateCounters() {
   // ===== WORLD GROWTH =====
   const oldWorld = worldPopulation;
 
-  worldPopulation += worldPopulation * (growthRates.world / secondsPerYear);
+ const now = Date.now();
+const elapsedSeconds = (now - lastTickTime) / 1000;
+lastTickTime = now;
+
+// Grow world using REAL elapsed time
+worldPopulation += worldPopulation *
+  (growthRates.world * elapsedSeconds / secondsPerYear);
+
 
   const deltaWorld = worldPopulation - oldWorld;
 
