@@ -116,4 +116,4 @@ function updateCounters() {
 loadData().then(() => {
   updateCounters();
   setInterval(updateCounters, 1000);
-});vv
+});
