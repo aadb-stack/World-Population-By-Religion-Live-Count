@@ -102,7 +102,6 @@ function updateCounters() {
   }
 }
 
-
 // --- RUN ---
 loadData().then(() => {
   updateCounters();
