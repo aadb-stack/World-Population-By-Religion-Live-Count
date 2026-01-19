@@ -36,10 +36,7 @@ const firebaseConfig = {
   appId: "1:226381276599:web:5c15d6b6f32e232125b432"
 };
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
 
-const database = getDatabase(app);
 const statsRef = ref(database, "/");
 
 // --- GLOBAL ANCHOR ---
