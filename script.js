@@ -1,16 +1,19 @@
 // =============================================
-// World Population by Religion (STABLE VERSION)
-// No Firebase. No async. No zeros.
+// World Population by Religion
+// Server-Authoritative (Firebase Anchor)
 // =============================================
 
-// ---- CONSTANTS ----
+const { initializeApp, getDatabase, ref, get } = window.firebaseModules;
+let previousDisplay = {
+  world: null
+};
+
+// --- CONSTANTS ---
 const secondsPerYear = 365 * 24 * 60 * 60;
 
-// Anchor (world population at a fixed known time)
-const BASE_WORLD = 8180000000;
-const BASE_TIMESTAMP = Date.UTC(2025, 0, 1); // Jan 1, 2025 UTC
-
-const GROWTH_RATE = 0.0085;
+const growthRates = {
+  world: 0.0085
+};
 
 const religionShares = {
   christian: 2380000000 / 8180000000,
@@ -26,48 +29,90 @@ const religionShares = {
   unaffiliated: 1900000000 / 8180000000
 };
 
-// ---- UI STATE ----
-let prevWorld = null;
+// --- FIREBASE INIT ---
+const firebaseConfig = {
+  apiKey: "AIzaSyC60KbVWhfeMRUyYPQHn_4z3tL_KPuaCAs",
+  authDomain: "world-religion-database.firebaseapp.com",
+  databaseURL: "https://world-religion-database-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "world-religion-database",
+  storageBucket: "world-religion-database.firebasestorage.app",
+  messagingSenderId: "226381276599",
+  appId: "1:226381276599:web:5c15d6b6f32e232125b432"
+};
 
-// ---- WORLD CALC ----
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+const statsRef = ref(database, "/");
+
+// --- GLOBAL ANCHOR ---
+let baseWorld = 0;
+let baseTimestamp = 0;
+
+// --- LOAD ANCHOR FROM FIREBASE ---
+async function loadData() {
+  const snapshot = await get(statsRef);
+  console.log("SNAPSHOT:", snapshot.val());
+
+  if (!snapshot.exists()) {
+    console.error("Firebase returned NULL");
+    return;
+  }
+
+  const data = snapshot.val();
+
+  baseWorld = Number(data.baseWorld);
+  baseTimestamp = Number(data.baseTimestamp);
+
+  console.log("Loaded baseWorld:", baseWorld);
+  console.log("Loaded baseTimestamp:", baseTimestamp);
+}
+
+// --- PURE WORLD CALCULATION ---
 function computeWorldNow() {
   const now = Date.now();
-  const elapsedSeconds = (now - BASE_TIMESTAMP) / 1000;
+  const elapsedSeconds = (now - baseTimestamp) / 1000;
 
   return Math.floor(
-    BASE_WORLD * (1 + GROWTH_RATE * elapsedSeconds / secondsPerYear)
+    baseWorld *
+    (1 + growthRates.world * elapsedSeconds / secondsPerYear)
   );
 }
 
-// ---- UPDATE ----
+// --- DISPLAY ONLY ---
 function updateCounters() {
-  const worldNow = computeWorldNow();
+  // Guard: wait for Firebase data
+  if (!baseWorld || !baseTimestamp) return;
+
+  const worldInt = computeWorldNow();
 
   const worldEl = document.getElementById("world");
   if (worldEl) {
-    worldEl.textContent = worldNow.toLocaleString();
+    worldEl.textContent = worldInt.toLocaleString();
 
-    if (prevWorld !== null) {
+    if (previousDisplay.world !== null) {
       worldEl.style.color =
-        worldNow > prevWorld ? "#00ff88" :
-        worldNow < prevWorld ? "#ff4d4d" :
+        worldInt > previousDisplay.world ? "#00ff88" :
+        worldInt < previousDisplay.world ? "#ff4d4d" :
         "white";
     }
 
-    prevWorld = worldNow;
+    previousDisplay.world = worldInt;
   }
 
-  for (const key in religionShares) {
+  for (let key in religionShares) {
     const el = document.getElementById(key);
     if (!el) continue;
 
-    const value = Math.floor(worldNow * religionShares[key]);
+    const value = Math.floor(worldInt * religionShares[key]);
     el.textContent = value.toLocaleString();
+
+    // Optional: subtle green flash only (no red needed)
     el.style.color = "#00ff88";
   }
 }
 
-// ---- RUN ----
-updateCounters();
-setInterval(updateCounters, 1000);
-
+// --- RUN ---
+loadData().then(() => {
+  updateCounters();
+  setInterval(updateCounters, 1000);
+});
