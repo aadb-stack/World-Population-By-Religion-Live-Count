@@ -48,12 +48,13 @@
   </main>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-  import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
 
-  window.firebaseModules = { initializeApp, getDatabase, ref, get, set };
+  window.firebaseModules = { initializeApp, getDatabase, ref, get };
 </script>
 
-  <script type="module" src="script.js"></script>
+<script src="script.js"></script>
+
 </body>
 </html>
 
