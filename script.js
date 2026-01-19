@@ -1,12 +1,9 @@
-// =============================================
+the code which u gave me: // =============================================
 // World Population by Religion
 // Server-Authoritative (Firebase Anchor)
 // =============================================
 
 const { initializeApp, getDatabase, ref, get } = window.firebaseModules;
-let previousDisplay = {
-  world: null
-};
 
 // --- CONSTANTS ---
 const secondsPerYear = 365 * 24 * 60 * 60;
@@ -51,20 +48,10 @@ let baseTimestamp = 0;
 // --- LOAD ANCHOR FROM FIREBASE ---
 async function loadData() {
   const snapshot = await get(statsRef);
-  console.log("SNAPSHOT:", snapshot.val());
-
-  if (!snapshot.exists()) {
-    console.error("Firebase returned NULL");
-    return;
-  }
-
   const data = snapshot.val();
 
   baseWorld = Number(data.baseWorld);
   baseTimestamp = Number(data.baseTimestamp);
-
-  console.log("Loaded baseWorld:", baseWorld);
-  console.log("Loaded baseTimestamp:", baseTimestamp);
 }
 
 // --- PURE WORLD CALCULATION ---
@@ -80,23 +67,17 @@ function computeWorldNow() {
 
 // --- DISPLAY ONLY ---
 function updateCounters() {
-  // Guard: wait for Firebase data
-  if (!baseWorld || !baseTimestamp) return;
+  // 🔒 Guard: don’t run until Firebase data is loaded
+  if (!baseWorld || !baseTimestamp) {
+    console.warn("Waiting for Firebase data...");
+    return;
+  }
 
   const worldInt = computeWorldNow();
 
   const worldEl = document.getElementById("world");
   if (worldEl) {
     worldEl.textContent = worldInt.toLocaleString();
-
-    if (previousDisplay.world !== null) {
-      worldEl.style.color =
-        worldInt > previousDisplay.world ? "#00ff88" :
-        worldInt < previousDisplay.world ? "#ff4d4d" :
-        "white";
-    }
-
-    previousDisplay.world = worldInt;
   }
 
   for (let key in religionShares) {
@@ -105,9 +86,6 @@ function updateCounters() {
 
     const value = Math.floor(worldInt * religionShares[key]);
     el.textContent = value.toLocaleString();
-
-    // Optional: subtle green flash only (no red needed)
-    el.style.color = "#00ff88";
   }
 }
 
