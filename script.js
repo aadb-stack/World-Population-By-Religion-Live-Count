@@ -3,8 +3,6 @@
 // Server-Authoritative (Firebase Anchor)
 // =============================================
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
 
 // --- CONSTANTS ---
 const secondsPerYear = 365 * 24 * 60 * 60;
@@ -38,7 +36,9 @@ const firebaseConfig = {
   appId: "1:226381276599:web:5c15d6b6f32e232125b432"
 };
 
-const app = initializeApp(firebaseConfig);
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
+
 const database = getDatabase(app);
 const statsRef = ref(database, "/");
 
