@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const rootRef = ref(db, "/");
-const previousRaw = {};
+const previousInt = {};
 
 // ---------------------------------------------
 // Constants
@@ -74,21 +74,21 @@ function renderWorld(val) {
   const el = document.getElementById("world");
   if (!el) return;
 
-  const prev = previousRaw.world ?? val;
+  const currentInt = Math.floor(val);
+  const prevInt = previousInt.world ?? currentInt;
 
-  el.textContent = Math.floor(val).toLocaleString();
+  el.textContent = currentInt.toLocaleString();
 
-  if (val > prev) {
+  if (currentInt > prevInt) {
     el.style.color = "#00ff88";
-  } else if (val < prev) {
+  } else if (currentInt < prevInt) {
     el.style.color = "#ff4d4d";
   } else {
     el.style.color = "#ffffff";
   }
 
-  previousRaw.world = val;
+  previousInt.world = currentInt;
 }
-
 
 function renderReligions(world) {
   for (const key in religionShares) {
@@ -96,22 +96,24 @@ function renderReligions(world) {
     if (!el) continue;
 
     const raw = world * religionShares[key];
-    const prev = previousRaw[key] ?? raw;
+    const currentInt = Math.floor(raw);
+    const prevInt = previousInt[key] ?? currentInt;
 
-    el.textContent = Math.floor(raw).toLocaleString();
+    el.textContent = currentInt.toLocaleString();
 
-    // Compare RAW values, not rounded ones
-    if (raw > prev) {
-      el.style.color = "#00ff88"; // increase
-    } else if (raw < prev) {
-      el.style.color = "#ff4d4d"; // decrease
+    // ✅ COLOR ONLY IF INTEGER CHANGES
+    if (currentInt > prevInt) {
+      el.style.color = "#00ff88";
+    } else if (currentInt < prevInt) {
+      el.style.color = "#ff4d4d";
     } else {
-      el.style.color = "#ffffff"; // truly no change
+      el.style.color = "#ffffff";
     }
 
-    previousRaw[key] = raw;
+    previousInt[key] = currentInt;
   }
 }
+
 
 // ---------------------------------------------
 // Run
