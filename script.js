@@ -1,9 +1,9 @@
 // =============================================
-// Time-Aware World + Religion Counter
-// Firebase Anchor Based (CORRECTED VERSION)
+// World Population by Religion – FINAL WORKING
 // =============================================
 
-const { initializeApp, getDatabase, ref, get } = window.firebaseModules;
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 // ---------------------------------------------
 // Firebase Config
@@ -20,11 +20,8 @@ const rootRef = ref(db, "/");
 // Constants
 // ---------------------------------------------
 const secondsPerYear = 365 * 24 * 60 * 60;
-
-// World growth (realistic avg)
 const WORLD_GROWTH_RATE = 0.0085;
 
-// Religion population shares (must sum ~1)
 const religionShares = {
   christian: 2380000000 / 8180000000,
   islam: 2020000000 / 8180000000,
@@ -40,15 +37,9 @@ const religionShares = {
 };
 
 // ---------------------------------------------
-// Runtime State
+// Load Firebase Anchor
 // ---------------------------------------------
-let baseWorld = 0;
-let baseTimestamp = 0;
-
-// ---------------------------------------------
-// Load Anchor From Firebase
-// ---------------------------------------------
-async function loadBaseData() {
+async function loadBase() {
   const snapshot = await get(rootRef);
 
   if (!snapshot.exists()) {
@@ -56,56 +47,42 @@ async function loadBaseData() {
     return;
   }
 
-  const data = snapshot.val();
-  baseWorld = data.baseWorld;
-  baseTimestamp = data.baseTimestamp;
-
-  console.log("Loaded base:", baseWorld, baseTimestamp);
-
-  startCounters();
+  const { baseWorld, baseTimestamp } = snapshot.val();
+  startCounters(baseWorld, baseTimestamp);
 }
 
 // ---------------------------------------------
 // Counter Logic
 // ---------------------------------------------
-function startCounters() {
+function startCounters(baseWorld, baseTimestamp) {
   setInterval(() => {
-    const now = Date.now();
-    const elapsedSeconds = (now - baseTimestamp) / 1000;
-
-    // Continuous exponential growth
-    const worldNow =
+    const elapsed = (Date.now() - baseTimestamp) / 1000;
+    const world =
       baseWorld *
-      Math.exp(WORLD_GROWTH_RATE * (elapsedSeconds / secondsPerYear));
+      Math.exp(WORLD_GROWTH_RATE * (elapsed / secondsPerYear));
 
-    renderWorld(worldNow);
-    renderReligions(worldNow);
+    renderWorld(world);
+    renderReligions(world);
   }, 1000);
 }
 
 // ---------------------------------------------
-// Render World
+// Render
 // ---------------------------------------------
-function renderWorld(value) {
-  const el = document.getElementById("world");
-  if (!el) return;
-  el.textContent = Math.floor(value).toLocaleString();
+function renderWorld(val) {
+  document.getElementById("world").textContent =
+    Math.floor(val).toLocaleString();
 }
 
-// ---------------------------------------------
-// Render Religions
-// ---------------------------------------------
-function renderReligions(worldValue) {
+function renderReligions(world) {
   for (const key in religionShares) {
     const el = document.getElementById(key);
     if (!el) continue;
-
-    const val = worldValue * religionShares[key];
-    el.textContent = Math.floor(val).toLocaleString();
+    el.textContent = Math.floor(world * religionShares[key]).toLocaleString();
   }
 }
 
 // ---------------------------------------------
 // Run
 // ---------------------------------------------
-loadBaseData();
+loadBase();
