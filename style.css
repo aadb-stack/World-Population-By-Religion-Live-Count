@@ -259,6 +259,10 @@ h1 {
   }
 
 }
+/* FORCE neutral default for all counters */
+.counter-box span:last-child {
+  color: #ffffff !important;
+}
 
 
 
