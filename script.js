@@ -25,21 +25,20 @@ const statsRef = ref(db, "/");
 
 // ---------- CONSTANTS ----------
 const secondsPerYear = 365 * 24 * 60 * 60;
-const growthRate = 0.0085;
-
-const religionShares = {
-  christian: 2380000000 / 8180000000,
-  islam: 2020000000 / 8180000000,
-  hindu: 1200000000 / 8180000000,
-  buddhism: 520000000 / 8180000000,
-  sikhism: 30000000 / 8180000000,
-  judaism: 15000000 / 8180000000,
-  taoism: 12000000 / 8180000000,
-  confucianism: 6000000 / 8180000000,
-  jainism: 4500000 / 8180000000,
-  shinto: 3000000 / 8180000000,
-  unaffiliated: 1900000000 / 8180000000
+const religionData = {
+  christian: { share: 2380000000 / 8180000000, rate: 0.009 },
+  islam: { share: 2020000000 / 8180000000, rate: 0.018 },
+  hindu: { share: 1200000000 / 8180000000, rate: 0.011 },
+  buddhism: { share: 520000000 / 8180000000, rate: 0.003 },
+  sikhism: { share: 30000000 / 8180000000, rate: 0.012 },
+  judaism: { share: 15000000 / 8180000000, rate: 0.003 },
+  taoism: { share: 12000000 / 8180000000, rate: -0.001 },
+  confucianism: { share: 6000000 / 8180000000, rate: -0.003 },
+  jainism: { share: 4500000 / 8180000000, rate: 0.004 },
+  shinto: { share: 3000000 / 8180000000, rate: -0.005 },
+  unaffiliated: { share: 1900000000 / 8180000000, rate: 0.007 }
 };
+
 
 // ---------- STATE ----------
 let baseWorld = 0;
